@@ -131,6 +131,10 @@ try {
 
     foreach ($Schoollocatie in $schoollocatiesResult)
     {
+        # klassen
+        $klassenResult = Invoke-PresentisRestMethod -Uri "$BaseUrl/klassen?schoollocatie=$($schoollocatie.schoollocatieid)&" -Headers  @{Authorization = "Bearer $($responseToken.acces_token)"} -ResultProperty "klassen"
+        $klassenLookup =  $klassenResult | group-object -Property "klas" -AsHashTable
+        
         $LeerlingenResult = Invoke-PresentisRestMethod -Uri "$BaseUrl/leerlingen?schoollocatie=$($schoollocatie.schoollocatieid)&" -Headers  @{Authorization = "Bearer $($responseToken.acces_token)"} -ResultProperty "leerlingen"
         foreach ($Leerling in $LeerlingenResult)
         {
@@ -148,9 +152,7 @@ try {
                 schoollocatieOmschrijving   = $Leerling.schoollocatieOmschrijving
             }
             $leerling.Contracts.add($primaryContract)
-            # klassen
-            $klassenResult = Invoke-PresentisRestMethod -Uri "$BaseUrl/klassen?schoollocatie=$($schoollocatie.schoollocatieid)&" -Headers  @{Authorization = "Bearer $($responseToken.acces_token)"} -ResultProperty "klassen"
-            $klassenLookup =  $klassenResult | group-object -Property "klas" -AsHashTable
+            
 
             $LeerlingKlassenResult = Invoke-PresentisRestMethod -Uri "$BaseUrl/leerlingklassen?leerlingid=$($leerling.leerlingid)&peildatum=$nowString&" -Headers  @{Authorization = "Bearer $($responseToken.acces_token)"} -ResultProperty "leerlingklassen"
             foreach ($klas in  $LeerlingKlassenResult)
