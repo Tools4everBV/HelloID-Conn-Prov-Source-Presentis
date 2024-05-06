@@ -23,7 +23,11 @@ function Invoke-PresentisRestMethod {
 
         [Parameter(Mandatory)]
         [System.Collections.IDictionary]
-        $Headers
+        $Headers,
+
+        [Parameter(Mandatory = $false)]  
+        [string]
+        $ResultProperty
     )
     $skip = 0
     $limit = 400
@@ -41,9 +45,9 @@ function Invoke-PresentisRestMethod {
                 Headers     =  $Headers
             }
             $resultlist = Invoke-RestMethod @splatParams -Verbose:$false
-            if ($null -ne $resultList)  {
-                $totalResultList.AddRange($resultlist)
-                if ($resultList.Count -eq $limit) {
+            if ($null -ne $resultList.$ResultProperty)  {
+                $totalResultList.AddRange($resultlist.$ResultProperty)
+                if ($resultList.$ResultProperty.Count -eq $limit) {
                     $skip += $limit
                     continue
                 }
@@ -92,12 +96,12 @@ try {
 
     if ($config.Environment -eq "Test")
     {
-        $OAuthUrl = https://oauthtest.presentis.nl/oauth2/token
-        $BaseUrl =  https://apitest.presentis.nl/rest/v1
+        $OAuthUrl = "https://oauthtest.presentis.nl/oauth2/token"
+        $BaseUrl =  "https://apitest.presentis.nl/rest/v1"
     }
     else {
-        $OAuthUrl = https://oauth.presentis.nl/oauth2/token
-        $BaseUrl = https://api.presentis.nl/rest/v1
+        $OAuthUrl = "https://oauth.presentis.nl/oauth2/token"
+        $BaseUrl = "https://api.presentis.nl/rest/v1"
     }
 
     Write-Verbose "Retrieve OAuth token"
@@ -117,13 +121,13 @@ try {
 
     Write-Verbose 'Collecting list of "schoollocaties"'
 
-    $schoollocatiesResult = Invoke-PresentisRestMethod -Uri "$BaseUrl/schoollocaties?" -Headers  @{Authorization = "Bearer $($responseToken.token)"}
+    $schoollocatiesResult = Invoke-PresentisRestMethod -Uri "$BaseUrl/schoollocaties?" -Headers  @{Authorization = "Bearer $($responseToken.acces_token)"} -ResultProperty "schoollocaties"
 
     Write-Verbose 'Collecting Persons and importing raw data in HelloID'
 
     foreach ($Schoollocatie in $schoollocatiesResult)
     {
-        $personenResult = Invoke-PresentisRestMethod -Uri "$BaseUrl/personen?schoollocatie=$($schoollocatie.schoollocatieid)&" -Headers  @{Authorization = "Bearer $($responseToken.token)"}
+        $personenResult = Invoke-PresentisRestMethod -Uri "$BaseUrl/personen?schoollocatie=$($schoollocatie.schoollocatieid)&" -Headers  @{Authorization = "Bearer $($responseToken.acces_token)"} -ResultProperty "personen"
         foreach ($person in $personenResult ) {
             $person | Add-Member -NotePropertyMembers @{ ExternalId = $person.persoonid }
             $person | Add-Member -NotePropertyMembers @{ DisplayName = "$($person.voornaam) $($person.achternaam)".trim(' ') }

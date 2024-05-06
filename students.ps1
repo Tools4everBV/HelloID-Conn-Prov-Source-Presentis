@@ -23,11 +23,15 @@ function Invoke-PresentisRestMethod {
 
         [Parameter(Mandatory)]
         [System.Collections.IDictionary]
-        $Headers
+        $Headers,
+
+        [Parameter(Mandatory = $false)]  
+        [string]
+        $ResultProperty
     )
     $skip = 0
     $limit = 400
-    bool $done = $false
+    [bool]$done = $false
 
     $totalResultList = [System.Collections.Generic.List[object]]::new()
 
@@ -42,9 +46,9 @@ function Invoke-PresentisRestMethod {
                 Headers     =  $Headers
             }
             $resultlist = Invoke-RestMethod @splatParams -Verbose:$false
-            if ($null -ne $resultList)  {
-                $totalResultList.AddRange($resultlist)
-                if ($resultList.Count -eq $limit) {
+            if ($null -ne $resultList.$ResultProperty)  {
+                $totalResultList.AddRange($resultlist.$ResultProperty)
+                if ($resultList.$ResultProperty.Count -eq $limit) {
                     $skip += $limit
                     continue
                 }
@@ -96,12 +100,12 @@ try {
 
     if ($config.Environment -eq "Test")
     {
-        $OAuthUrl = https://oauthtest.presentis.nl/oauth2/token
-        $BaseUrl =  https://apitest.presentis.nl/rest/v1
+        $OAuthUrl = "https://oauthtest.presentis.nl/oauth2/token"
+        $BaseUrl =  "https://apitest.presentis.nl/rest/v1"
     }
     else {
-        $OAuthUrl = https://oauth.presentis.nl/oauth2/token
-        $BaseUrl = https://api.presentis.nl/rest/v1
+        $OAuthUrl = "https://oauth.presentis.nl/oauth2/token"
+        $BaseUrl = "https://api.presentis.nl/rest/v1"
     }
 
     Write-Verbose "Retrieve OAuth token"
@@ -120,19 +124,23 @@ try {
     $responseToken = Invoke-RestMethod @splatOauthParams -Verbose:$false
 
     #get lookuplist for cursus
-    $cursusResult = Invoke-PresentisRestMethod -Uri "$BaseUrl/cursussen?" -Headers  @{Authorization = "Bearer $($responseToken.token)"}
+    $cursusResult = Invoke-PresentisRestMethod -Uri "$BaseUrl/cursussen?" -Headers  @{Authorization = "Bearer $($responseToken.acces_token)"} -ResultProperty "cursussen"
     $cursusLookup =  $cursusResult | group-object -Property "cursusid" -AsHashTable
 
-    $schoollocatiesResult = Invoke-PresentisRestMethod -Uri "$BaseUrl/schoollocaties?" -Headers  @{Authorization = "Bearer $($responseToken.token)"}
+    $schoollocatiesResult = Invoke-PresentisRestMethod -Uri "$BaseUrl/schoollocaties?" -Headers  @{Authorization = "Bearer $($responseToken.acces_token)"} -ResultProperty "schoollocaties"
 
     foreach ($Schoollocatie in $schoollocatiesResult)
     {
-        $LeerlingenResult = Invoke-PresentisRestMethod -Uri "$BaseUrl/leerlingen?schoollocatie=$($schoollocatie.schoollocatieid)&" -Headers  @{Authorization = "Bearer $($responseToken.token)"}
+        # klassen
+        $klassenResult = Invoke-PresentisRestMethod -Uri "$BaseUrl/klassen?schoollocatie=$($schoollocatie.schoollocatieid)&" -Headers  @{Authorization = "Bearer $($responseToken.acces_token)"} -ResultProperty "klassen"
+        $klassenLookup =  $klassenResult | group-object -Property "klas" -AsHashTable
+        
+        $LeerlingenResult = Invoke-PresentisRestMethod -Uri "$BaseUrl/leerlingen?schoollocatie=$($schoollocatie.schoollocatieid)&" -Headers  @{Authorization = "Bearer $($responseToken.acces_token)"} -ResultProperty "leerlingen"
         foreach ($Leerling in $LeerlingenResult)
         {
             $Leerling | Add-Member -NotePropertyMembers @{ ExternalId = $leerling.leerlingid }
             $Leerling | Add-Member -NotePropertyMembers @{ DisplayName = "$($leerling.voornaam) $($leerling.achternaam)".trim(' ') }
-            $Leerling | Add-Member -NotePropertyMembers @{ SchoollocatieId = $Schoollocatie.schoollocatieid}
+            $Leerling | Add-Member -NotePropertyMembers @{ SchoollocatieId = $Schoollocatie.schoollocatieid} -Force
             $Leerling | Add-Member -NotePropertyMembers @{ SchoollocatieOmschrijving = $Schoollocatie.omschrijving}
             $Leerling | Add-Member -NotePropertyMembers @{ Contracts = [System.Collections.Generic.List[Object]]::new() }
             #inschrijving
@@ -144,11 +152,9 @@ try {
                 schoollocatieOmschrijving   = $Leerling.schoollocatieOmschrijving
             }
             $leerling.Contracts.add($primaryContract)
-            # klassen
-            $klassenResult = Invoke-PresentisRestMethod -Uri "$BaseUrl/klassen?schoollocatie=$($schoollocatie.schoollocatieid)&" -Headers  @{Authorization = "Bearer $($responseToken.token)"}
-            $klassenLookup =  $klassenResult | group-object -Property "klas" -AsHashTable
+            
 
-            $LeerlingKlassenResult = Invoke-PresentisRestMethod -Uri "$BaseUrl/leerlingklassen?leerlingid=$($leerling.leerlingid)&peildatum=$nowString&" -Headers  @{Authorization = "Bearer $($responseToken.token)"}
+            $LeerlingKlassenResult = Invoke-PresentisRestMethod -Uri "$BaseUrl/leerlingklassen?leerlingid=$($leerling.leerlingid)&peildatum=$nowString&" -Headers  @{Authorization = "Bearer $($responseToken.acces_token)"} -ResultProperty "leerlingklassen"
             foreach ($klas in  $LeerlingKlassenResult)
             {
                 $klasContract = @{
@@ -170,7 +176,7 @@ try {
             }
 
             #Cursussen
-            $LeerlingCursussenResult = Invoke-PresentisRestMethod -Uri "$BaseUrl/leerlingcursussen?leerlingid=$($leerling.leerlingid)&peildatum=$nowString&" -Headers  @{Authorization = "Bearer $($responseToken.token)"}
+            $LeerlingCursussenResult = Invoke-PresentisRestMethod -Uri "$BaseUrl/leerlingcursussen?leerlingid=$($leerling.leerlingid)&peildatum=$nowString&" -Headers  @{Authorization = "Bearer $($responseToken.acces_token)"} -ResultProperty "leerlingcursussen"
             foreach ($cursus in  $LeerlingCursussenResult)
             {
                 $cursusContract = @{
