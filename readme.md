@@ -1,7 +1,5 @@
 
 # HelloID-Conn-Prov-Source-Presentis
-> :warning: <b> This connector is not tested with HelloID or with a Presentis environment! </b>><br>
-:warning: <b> Note that this connector is "a work in progress" and therefore not ready to use in your production environment.
 
 | :information_source: Information |
 |:---------------------------|
