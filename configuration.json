@@ -5,7 +5,7 @@
         "defaultValue": "",
         "templateOptions": {
             "label": "UserName",
-            "description": "The UserName to connect to the API",
+            "description": "The UserName (client ID) to connect to the API, including the curly brackets, e.g. {00000000-0000-0000-0000-000000000000}",
             "required": true
         }
     },
