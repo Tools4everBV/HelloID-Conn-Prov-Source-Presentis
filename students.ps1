@@ -317,7 +317,10 @@ try {
         $contractsList = [System.Collections.Generic.List[object]]::new()
 
         # Create contract object(s) based on enrollments, linking key is leerlingid
-        $enrollments = $leerlingenGrouped["$($_.leerlingid)"]
+        $enrollments = $null
+        if ($null -ne $leerlingenGrouped) {
+            $enrollments = $leerlingenGrouped["$($_.leerlingid)"]
+        }
         if ($null -ne $enrollments) {
             foreach ($enrollment in $enrollments) {
                 $enrollmentObject = [PSCustomObject]@{
@@ -330,7 +333,10 @@ try {
                 }
 
                 # Enhance enrollment with schoollocatie for extra information, such as: omschrijving
-                $schoollocatie = $schoollocatiesGrouped["$($enrollment.schoollocatieid)"]
+                $schoollocatie = $null
+                if ($null -ne $schoollocatiesGrouped) {
+                    $schoollocatie = $schoollocatiesGrouped["$($enrollment.schoollocatieid)"]
+                }
                 if ($null -ne $schoollocatie) {
                     # In case multiple are found with the same ID, we always select the first one in the array
                     $schoollocatie = $schoollocatie | Select-Object -First 1
@@ -342,14 +348,20 @@ try {
         }
 
         # Create contract object(s) based on leerlingklassen, linking key is leerlingid
-        $leerlingKlassen = $leerlingKlassenGrouped["$($_.leerlingid)"]
+        $leerlingKlassen = $null
+        if ($null -ne $leerlingKlassenGrouped) {
+            $leerlingKlassen = $leerlingKlassenGrouped["$($_.leerlingid)"]
+        }
         if ($null -ne $leerlingKlassen) {
             foreach ($leerlingKlas in $leerlingKlassen) {
                 $leerlingKlas | Add-Member -MemberType NoteProperty -Name "ExternalId" -Value "klas-$($leerlingKlas.leerlingklasid)" -Force
                 $leerlingKlas | Add-Member -MemberType NoteProperty -Name "ContractType" -Value "klas" -Force
 
                 # Enhance leerlingklas with klas for extra information, such as: omschrijving
-                $klas = $klassenGrouped["$($leerlingKlas.schoollocatieid)_$($leerlingKlas.klas)"]
+                $klas = $null
+                if ($null -ne $klassenGrouped) {
+                    $klas = $klassenGrouped["$($leerlingKlas.schoollocatieid)_$($leerlingKlas.klas)"]
+                }
                 if ($null -ne $klas) {
                     # In case multiple are found with the same ID, we always select the first one in the array
                     $klas = $klas | Select-Object -First 1
@@ -362,7 +374,10 @@ try {
                 }
 
                 # Enhance leerlingklas with schoollocatie for extra information, such as: omschrijving
-                $schoollocatie = $schoollocatiesGrouped["$($leerlingKlas.schoollocatieid)"]
+                $schoollocatie = $null
+                if ($null -ne $schoollocatiesGrouped) {
+                    $schoollocatie = $schoollocatiesGrouped["$($leerlingKlas.schoollocatieid)"]
+                }
                 if ($null -ne $schoollocatie) {
                     # In case multiple are found with the same ID, we always select the first one in the array
                     $schoollocatie = $schoollocatie | Select-Object -First 1
@@ -374,14 +389,20 @@ try {
         }
 
         # Create contract object(s) based on leerlingcursussen, linking key is leerlingid
-        $leerlingCursussen = $leerlingCursussenGrouped["$($_.leerlingid)"]
+        $leerlingCursussen = $null
+        if ($null -ne $leerlingCursussenGrouped) {
+            $leerlingCursussen = $leerlingCursussenGrouped["$($_.leerlingid)"]
+        }
         if ($null -ne $leerlingCursussen) {
             foreach ($leerlingCursus in $leerlingCursussen) {
                 $leerlingCursus | Add-Member -MemberType NoteProperty -Name "ExternalId" -Value "cursus-$($leerlingCursus.leerlingcursusid)" -Force
                 $leerlingCursus | Add-Member -MemberType NoteProperty -Name "ContractType" -Value "cursus" -Force
 
                 # Enhance leerlingcursus with cursus for extra information, such as: omschrijving
-                $cursus = $cursussenGrouped["$($leerlingCursus.cursusid)"]
+                $cursus = $null
+                if ($null -ne $cursussenGrouped) {
+                    $cursus = $cursussenGrouped["$($leerlingCursus.cursusid)"]
+                }
                 if ($null -ne $cursus) {
                     # In case multiple are found with the same ID, we always select the first one in the array
                     $cursus = $cursus | Select-Object -First 1
