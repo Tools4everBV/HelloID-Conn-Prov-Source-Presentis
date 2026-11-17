@@ -5,13 +5,13 @@
             "mode": "field",
             "value": "ExternalId",
             "validation": {
-                "required": false
+                "required": true
             }
         },
         {
             "name": "Name.Convention",
-            "mode": "field",
-            "value": "Convention",
+            "mode": "fixed",
+            "value": "B",
             "validation": {
                 "required": false
             }
@@ -19,15 +19,23 @@
         {
             "name": "Name.FamilyName",
             "mode": "field",
-            "value": "LastName",
+            "value": "achternaam",
             "validation": {
                 "required": true
             }
         },
         {
+            "name": "Name.GivenName",
+            "mode": "field",
+            "value": "voornaam",
+            "validation": {
+                "required": false
+            }
+        },
+        {
             "name": "Name.NickName",
             "mode": "field",
-            "value": "FirstName",
+            "value": "voornaam",
             "validation": {
                 "required": true
             }
@@ -37,7 +45,7 @@
         {
             "name": "Department.DisplayName",
             "mode": "field",
-            "value": "DepartmentName",
+            "value": "schoollocatie_omschrijving",
             "validation": {
                 "required": false
             }
@@ -45,15 +53,15 @@
         {
             "name": "Department.ExternalId",
             "mode": "field",
-            "value": "DepartmentCode",
+            "value": "schoollocatieid",
             "validation": {
                 "required": false
             }
         },
         {
             "name": "EndDate",
-            "mode": "field",
-            "value": "EndDate",
+            "mode": "complex",
+            "value": "// Presentis returns dates as yyyyMMdd\nfunction convertDate(value) {\n    let returnValue = null;\n\n    if (typeof value !== 'undefined' && value) {\n        const dateString = String(value);\n\n        if (dateString.length === 8 && dateString !== '00000000') {\n            const date = new Date(dateString.substring(0, 4) + '-' + dateString.substring(4, 6) + '-' + dateString.substring(6, 8));\n\n            if (!isNaN(date)) {\n                returnValue = date;\n            }\n        }\n    }\n\n    return returnValue;\n}\n\nfunction getValue() {\n    let returnValue = null;\n\n    switch (sourceContract.ContractType) {\n        case 'inschrijving': {\n            returnValue = convertDate(sourceContract.uitschrijfdatum);\n            break;\n        }\n        default: {\n            returnValue = convertDate(sourceContract.einddatum);\n            break;\n        }\n    }\n\n    return returnValue;\n}\n\ngetValue();",
             "validation": {
                 "required": false
             }
@@ -61,31 +69,55 @@
         {
             "name": "ExternalId",
             "mode": "field",
-            "value": "SequenceNumber",
+            "value": "ExternalId",
+            "validation": {
+                "required": true
+            }
+        },
+        {
+            "name": "StartDate",
+            "mode": "complex",
+            "value": "// Presentis returns dates as yyyyMMdd\nfunction convertDate(value) {\n    let returnValue = null;\n\n    if (typeof value !== 'undefined' && value) {\n        const dateString = String(value);\n\n        if (dateString.length === 8 && dateString !== '00000000') {\n            const date = new Date(dateString.substring(0, 4) + '-' + dateString.substring(4, 6) + '-' + dateString.substring(6, 8));\n\n            if (!isNaN(date)) {\n                returnValue = date;\n            }\n        }\n    }\n\n    return returnValue;\n}\n\nfunction getValue() {\n    let returnValue = null;\n\n    switch (sourceContract.ContractType) {\n        case 'inschrijving': {\n            returnValue = convertDate(sourceContract.inschrijfdatum);\n            break;\n        }\n        default: {\n            returnValue = convertDate(sourceContract.begindatum);\n            break;\n        }\n    }\n\n    return returnValue;\n}\n\ngetValue();",
             "validation": {
                 "required": false
             }
         },
         {
-            "name": "StartDate",
-            "mode": "field",
-            "value": "StartDate",
+            "name": "Title.Code",
+            "mode": "complex",
+            "value": "function getValue() {\n    let returnValue = null;\n\n    switch (sourceContract.ContractType) {\n        case 'klas': {\n            returnValue = sourceContract.klas;\n            break;\n        }\n        case 'cursus': {\n            returnValue = sourceContract.cursusid;\n            break;\n        }\n        default: {\n            returnValue = sourceContract.ContractType;\n            break;\n        }\n    }\n\n    return returnValue;\n}\n\ngetValue();",
             "validation": {
                 "required": false
             }
         },
         {
             "name": "Title.ExternalId",
-            "mode": "field",
-            "value": "TitleCode",
+            "mode": "complex",
+            "value": "function getValue() {\n    let returnValue = null;\n\n    switch (sourceContract.ContractType) {\n        case 'klas': {\n            returnValue = sourceContract.klas;\n            break;\n        }\n        case 'cursus': {\n            returnValue = sourceContract.cursusid;\n            break;\n        }\n        default: {\n            returnValue = sourceContract.ContractType;\n            break;\n        }\n    }\n\n    return returnValue;\n}\n\ngetValue();",
             "validation": {
                 "required": false
             }
         },
         {
             "name": "Title.Name",
+            "mode": "complex",
+            "value": "function getValue() {\n    let returnValue = null;\n\n    switch (sourceContract.ContractType) {\n        case 'klas': {\n            // Fall back on the klas code when the klas has no description\n            if (typeof sourceContract.klas_omschrijving !== 'undefined' && sourceContract.klas_omschrijving) {\n                returnValue = sourceContract.klas_omschrijving;\n            }\n            else {\n                returnValue = sourceContract.klas;\n            }\n            break;\n        }\n        case 'cursus': {\n            // Fall back on the cursus id when the cursus has no description\n            if (typeof sourceContract.cursus_omschrijving !== 'undefined' && sourceContract.cursus_omschrijving) {\n                returnValue = sourceContract.cursus_omschrijving;\n            }\n            else {\n                returnValue = sourceContract.cursusid;\n            }\n            break;\n        }\n        default: {\n            returnValue = 'Leerling';\n            break;\n        }\n    }\n\n    return returnValue;\n}\n\ngetValue();",
+            "validation": {
+                "required": false
+            }
+        },
+        {
+            "name": "Type.Code",
             "mode": "field",
-            "value": "TitleName",
+            "value": "ContractType",
+            "validation": {
+                "required": false
+            }
+        },
+        {
+            "name": "Type.Description",
+            "mode": "field",
+            "value": "ContractType",
             "validation": {
                 "required": false
             }
